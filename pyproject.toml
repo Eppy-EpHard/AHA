@@ -1,0 +1,28 @@
+[project]
+name = "agent-free-wsp"
+version = "0.1.0"
+description = "Agent-free weight-space programming: remove reasoning loops with a rank-1 weight edit, no LLM agent"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "torch>=2.6",
+  "transformers>=5.17",
+  "safetensors",
+  "numpy",
+  "huggingface_hub",
+  "tqdm",
+  "datasets>=5.1.0",
+]
+
+[project.optional-dependencies]
+# generation and grading; docs/RERUN.md installs these into a separate vLLM virtualenv
+gpu = ["vllm", "math-verify"]
+
+[dependency-groups]
+dev = ["pytest"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/afwsp"]

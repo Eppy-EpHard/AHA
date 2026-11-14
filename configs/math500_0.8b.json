@@ -1,0 +1,13 @@
+{
+  "_notes": "Our own 0.8B MATH-500 run: the unedited model and Haitham's 0.8B edit (put the file at the arm's path), under PREREG_math500.md's settings (n=1, seed 0). No pipeline stages run, since the arm is an existing edit file. Afterwards: python scripts/math500_analyse.py results/gpu/math500-0.8b/base/math500 results/gpu/math500-0.8b/edit_08b/math500 runs/math500-0.8b/observations/math500_analysis.json",
+  "name": "math500-0.8b",
+  "model": "Qwen3.5-0.8B",
+  "model_dir": "models/Qwen3.5-0.8B",
+  "model_revision": "2fc06364715b967f1860aea9cf38778875588b17",
+  "text_config": "data/model_text",
+  "vllm_python": "/workspace/vllmenv/bin/python",
+  "traces": {"dir": "results/gpu/math500-0.8b/base_fitgen"},
+  "arms": {"edit_08b": {"edit": "edits/haitham/qwen3.5-0.8b.safetensors"}},
+  "benchmarks": ["math500"],
+  "base_runs": {}
+}

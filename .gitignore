@@ -1,0 +1,32 @@
+__pycache__/
+*.pyc
+.DS_Store
+.venv/
+
+# model weights, checkpoints, caches
+models/
+ckpts/
+cache/
+*.npy
+*.safetensors
+
+# copied from the original paper's Experiment 8 logs by scripts/fetch_exp8.sh
+third_party/
+data/practice/
+data/model_text/
+
+# raw generations are big; scores.json and *_per_problem.json are tracked.
+results/**/acts/
+results/gpu/**/*_samples.jsonl.gz
+results/logs/
+results/gpu/**/.done
+# agentic evals: raw model calls, harness outputs and server logs stay local (scores and summaries are tracked)
+results/gpu/**/calls*.jsonl
+results/gpu/**/server.log
+results/gpu/**/bfcl/result/
+results/gpu/**/tau2/
+
+# run bookkeeping: logs get large and state is per machine; manifests, observations and reports are tracked
+runs/*/logs/
+runs/*/state/
+.pytest_cache/

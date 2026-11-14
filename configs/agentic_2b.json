@@ -1,0 +1,19 @@
+{
+  "_notes": "BFCL-V4 and tau2-bench v1.0.1 on Qwen3.5-2B: the unedited model against Haitham's 2B edit (put the file at the arm's path). Qwen reports 43.6 (BFCL-V4) and 48.8 (TAU2) for the unedited 2B. The 2B text-only config is derived on the first run. Needs OPENAI_API_KEY (and SERPAPI_API_KEY for web search). See docs/AGENTIC.md.",
+  "name": "agentic-2b",
+  "model": "Qwen3.5-2B",
+  "model_dir": "models/Qwen3.5-2B",
+  "model_revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+  "text_config": "data/model_text_2b",
+  "vllm_python": "/workspace/vllmenv/bin/python",
+  "bfcl_python": "/workspace/bfclenv/bin/python",
+  "tau2_bin": "/workspace/tau2-bench/.venv/bin/tau2",
+  "traces": {"dir": "results/gpu/agentic-2b/base_fitgen"},
+  "arms": {"edit_2b": {"edit": "edits/haitham/qwen3.5-2b.safetensors"}},
+  "benchmarks": ["bfcl_v4", "tau2"],
+  "bench_args": {
+    "bfcl_v4": ["--categories", "all_scoring", "--threads", "16"],
+    "tau2": ["--domains", "airline,retail,telecom", "--concurrency", "8"]
+  },
+  "base_runs": {}
+}
