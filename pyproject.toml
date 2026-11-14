@@ -11,11 +11,10 @@ dependencies = [
   "huggingface_hub",
   "tqdm",
   "datasets>=5.1.0",
+  "math-verify",
+  "vllm>=0.33; sys_platform == 'linux'",   # generation; Linux + CUDA only
 ]
 
-[project.optional-dependencies]
-# generation and grading; docs/RERUN.md installs these into a separate vLLM virtualenv
-gpu = ["vllm", "math-verify"]
 
 [dependency-groups]
 dev = ["pytest"]

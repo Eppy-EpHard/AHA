@@ -1,14 +1,13 @@
 # Third-party notices
 
 **weight-space-lp** by Nathan Barry (https://github.com/nathanrs/weight-space-lp, commit a7de510), MIT licence
-below. These files in `src/afwsp/` are adapted from it, keeping only what this pipeline uses: `loops.py`,
-`model.py`, `collect.py`, `acts.py`, `lp.py` (the PDHG solver only), `edits.py`, `ckpt.py`, `eval/grade.py`,
-`eval/datasets.py`, `eval/maths.py` and `eval/ifeval.py`. `data/splits.json` is his split of the practice
-problems.
+below. Parts of `src/afwsp/` are adapted from it, keeping only what this pipeline uses: the loop detector
+(`loops.py`), the model hooks and checkpoint builder (`model.py`), the activation collection and the PDHG
+solver for the LP (`edit.py`), and the maths evaluation harness (`evals.py`). `data/splits.json` is his split
+of the practice problems.
 
-`eval/grade.py` is in turn ported from `exp8_math/code/mathqa.py` of *Sparks of Weight-Space Programming*
-(Takehi, Teoh, Zhang and Khattab; MIT). The practice problems and the 0.8B text-only config that
-`scripts/fetch_exp8.sh` downloads come from https://github.com/RikiyaT/lm_understand-logs.
+The grading in `evals.py` is in turn ported from `exp8_math/code/mathqa.py` of *Sparks of Weight-Space Programming*
+(Takehi, Teoh, Zhang and Khattab; MIT). The practice problems `scripts/setup.sh` downloads come from https://github.com/RikiyaT/lm_understand-logs.
 
 ```
 MIT License

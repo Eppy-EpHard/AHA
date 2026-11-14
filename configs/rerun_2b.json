@@ -1,16 +1,8 @@
 {
-  "_notes": "Agent-free 2B: everything is the 2B's own (traces, pairs, direction, layer search), evaluated on held-out MATH-500. The earlier 2B results inherited the 0.8B's (Astra's) layers 15/19. Revision pinned on 2026-11-14. See docs/RERUN.md.",
   "name": "rerun-2b",
-  "model": "Qwen3.5-2B",
-  "model_dir": "models/Qwen3.5-2B",
-  "model_revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
-  "text_config": "data/model_text_2b",
-  "vllm_python": "/workspace/vllmenv/bin/python",
-  "traces": {"dir": "results/gpu/rerun-2b/base_fitgen", "split": "fit_gen"},
-  "pairs": {"PAIR_MAX_PREFIX": 300, "PAIR_N_LOOP": 8, "PAIR_N_PROD": 0},
-  "acts": {"TRACES": 300},
-  "lp": {"EPS": 1.0, "K": 8, "MULT": 4, "SEED": 0},
+  "model": "models/Qwen3.5-2B",
   "arms": {"derived": "top2", "inherited": [15, 19]},
   "benchmarks": ["math500"],
-  "base_runs": {}
+  "pairs": {"n_loop": 8, "n_prod": 0, "max_prefix": 300},
+  "lp": {"eps": 1.0, "k": 8, "mult": 4, "seed": 0}
 }

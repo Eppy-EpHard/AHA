@@ -15,7 +15,7 @@ dozens of lines up.
 export VLLM_USE_FLASHINFER_SAMPLER=0
 ```
 
-**Put the venv's `bin/` on PATH.** Launching by absolute interpreter path (`/workspace/vllmenv/bin/python`)
+**Put the venv's `bin/` on PATH.** Launching by absolute interpreter path (`.venv/bin/python`)
 hides `ninja` from the compiler and you get `FileNotFoundError: 'ninja'` from inside the engine.
 
 **Force spawn.** vLLM picks `fork` when the parent has not touched CUDA, and the forked engine core then
@@ -48,9 +48,7 @@ nvidia-smi --query-compute-apps=pid,used_memory --format=csv
 **Base traces belong to one model.** Upstream shipped the 0.8B's traces in git, and a bare "does this file exist"
 check silently reused them for a different model. The prefixes and loop onsets then belong to the wrong model
 entirely, and the run produces plausible numbers that mean nothing. Here every run generates its own traces
-into its own folder and stamps them with the model (`.model`). `scripts/run_experiment.py` refuses traces stamped
-for another model. Every run also gets its own cache, edits and checkpoint folders, so two models never share
-intermediates.
+inside its own folder, `runs/<name>/`, so two models never share them or any other intermediate.
 
 **`presence_penalty` suppresses the behaviour you are collecting.** See the README. 1% yield versus 32%.
 
@@ -110,8 +108,8 @@ Looping diminishes sharply with scale in single-turn QA: ~89% of traces at 0.8B,
 removes an obstacle; it cannot add an ability the model lacks, which is also what Takehi et al. found for
 Gemma 3 270M. Check how much accuracy a model actually loses to looping before running the full pipeline —
 `cut_share` is an upper bound on what the edit could recover, and anything under ~8 points is not worth it.
-`python -m afwsp.eval.cut_survey` measures it in one generation pass with no edit, no pairs and no LP; a survey of
-eight benchmarks is in RESULTS.md.
+Haitham's `cut_survey.py` (haithamb/matched-pairs) measures it in one generation pass; a survey of eight
+benchmarks is in RESULTS.md.
 
 **Beware the answer format, not just the task.** MedQA scores `cut_share` 0.17 as multiple choice and 0.52
 on the *same questions* with the options hidden. A visible option list gives the model somewhere to stop, so

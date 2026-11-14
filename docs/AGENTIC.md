@@ -12,13 +12,13 @@ These two benchmarks come from Qwen's own model cards, so the unedited baselines
 ## How it runs
 
 ```
-BFCL / tau2 (their own venvs) ──> logging proxy (afwsp.eval.proxy) ──> vLLM server (afwsp.serve) ──> checkpoint
+BFCL / tau2 (their own venvs) ──> logging proxy ──> vLLM server ──> checkpoint        (all in afwsp/agentic.py)
 ```
 
 - **The model.** vLLM serves the base or edited checkpoint with Qwen3.5's own tool-call parser (`qwen3_coder`)
   and reasoning parser (`qwen3`), thinking on. Sampling is the setting Qwen reports these scores under:
   temperature 1.0, top_p 0.95, top_k 20, presence_penalty 1.5, up to 32,768 tokens per call. Set
-  `agent_sampling` in the config to change it.
+  `SAMPLING` in `agentic.py` to change it.
 - **The proxy.** It records every model call: the thinking, the answer, any tool calls, tokens, and whether the
   call hit the limit. From that come per-call and per-episode loop statistics, measured by the same detector as
   every other eval here.
@@ -57,31 +57,31 @@ export OPENAI_API_KEY=...        # tau2's user simulator and judge
 export SERPAPI_API_KEY=...       # BFCL's two web-search categories; without it they are left out
 ```
 
-The vLLM virtualenv is the one from docs/RERUN.md. The paths above match `configs/agentic_*.json`.
+vLLM comes from the project's own environment (`uv sync`). The paths above match `configs/agentic_*.json`.
 
 ## Run
 
 ```bash
-uv run python scripts/run_experiment.py configs/agentic_0.8b.json --dry-run
-uv run python scripts/run_experiment.py configs/agentic_0.8b.json
-uv run python scripts/run_experiment.py configs/agentic_2b.json      # once Haitham's 2B edit is in place
+uv run python scripts/run.py configs/agentic_0.8b.json --dry-run
+uv run python scripts/run.py configs/agentic_0.8b.json
+uv run python scripts/run.py configs/agentic_2b.json      # once Haitham's 2B edit is in place
 ```
 
 A benchmark can also be run alone on any checkpoint:
 
 ```bash
-AFWSP_VLLM_PYTHON=/workspace/vllmenv/bin/python AFWSP_BFCL_PYTHON=/workspace/bfclenv/bin/python \
-  uv run python -m afwsp.eval.bfcl ckpts/agentic-0.8b/base results/gpu/agentic-0.8b/base/bfcl_v4
-AFWSP_VLLM_PYTHON=/workspace/vllmenv/bin/python AFWSP_TAU2=/workspace/tau2-bench/.venv/bin/tau2 \
-  uv run python -m afwsp.eval.tau2 ckpts/agentic-0.8b/base results/gpu/agentic-0.8b/base/tau2 --num-tasks 5
+uv run python -m afwsp.agentic bfcl runs/agentic-0.8b/checkpoints/base out/bfcl \
+  --bfcl-python /workspace/bfclenv/bin/python
+uv run python -m afwsp.agentic tau2 runs/agentic-0.8b/checkpoints/base out/tau2 \
+  --tau2 /workspace/tau2-bench/.venv/bin/tau2 --num-tasks 5
 ```
 
-`--num-tasks 5` (tau2) and `--categories simple_python` (BFCL) make quick smoke runs. Set `AFWSP_MODEL_URL` to
-use a server that is already running instead of starting one.
+`--num-tasks 5` (tau2) and `--categories simple_python` (BFCL) make quick smoke runs. `--model-url` uses a server
+that is already running instead of starting one.
 
 ## What gets saved, per arm and benchmark
 
-`results/gpu/<run>/<arm>/<benchmark>/`:
+`runs/<run>/results/<arm>/<benchmark>/`:
 
 | file | contents |
 |---|---|

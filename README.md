@@ -63,8 +63,8 @@ predict edit quality; sharing context does. This is the most interesting result 
 The reference protocol sets `presence_penalty=1.5` — a parameter whose job is to suppress repetition.
 Resampling every continuation under it yielded **12 loops in 1800 continuations (1%)** and the method simply
 failed. Drawing all continuations at `presence_penalty=0` takes the yield to **772/2400**, and matched pairs
-then exist *within a single sampler*, so class and sampler are not confounded. `gen_pairs.py` still defaults
-to the older 4/4 split, so set `PAIR_N_LOOP=8 PAIR_N_PROD=0` to draw everything at `pp=0`.
+then exist *within a single sampler*, so class and sampler are not confounded. That is the default here
+(`"pairs": {"n_loop": 8, "n_prod": 0}`).
 
 The residuals come from teacher-forcing, where sampling parameters play no part in the forward pass, and
 every continuation is labelled by **its own detected loop onset**, never by which sampler drew it.
@@ -74,78 +74,47 @@ every continuation is labelled by **its own detected loop onset**, never by whic
 ## Layout
 
 ```
-src/afwsp/                  the package
-  loops.py                  loop detector and token labels
-  model.py, collect.py      load the model; capture and cache MLP inputs and layer outputs
-  acts.py                   cached activations, split by trace into fit and held-out
-  lp.py                     the linear program for v, solved by PDHG
-  edits.py, ckpt.py         write rank-1 edits; build text-only checkpoints for vLLM
-  serve.py                  serve a checkpoint with vLLM's OpenAI-compatible server (agentic evals)
-  paths.py                  every path, overridable per run (AFWSP_MODEL, _TEXT_CONFIG, _CACHE, _EDITS)
-  eval/                     maths (GSM8K, MATH, MATH-500), ifeval, medqa, medqa_open, cut_survey;
-                            bfcl and tau2 (agentic, docs/AGENTIC.md); proxy (logs every agentic model call);
-                            record (per-sample loop stats and summary.json for every eval)
+src/afwsp/
+  loops.py        the loop detector
+  model.py        load the model, hook its layers, read its weights, build vLLM checkpoints
+  direction.py    matched pairs → u
+  edit.py         activations → the LP for v → layer ranking → W + u·vᵀ
+  evals.py        MATH-500 and GSM8K, with loop statistics for every answer
+  report.py       what a run built and how each arm did → report.md
+  agentic.py      BFCL-V4 and tau2-bench (docs/AGENTIC.md); bfcl_entry.py runs inside BFCL's own venv
 scripts/
-  run_experiment.py         the whole pipeline from one config, every step logged (docs/RERUN.md)
-  gen_pairs.py         1-3  matched continuations from shared prefixes      (vLLM)
-  pair_directions.py   4-5  the direction per layer, and every pair's difference
-  collect_layers.py         activations at every layer
-  layer_search.py      6    the LP at every layer, ranked (as a predictor, a NULL result - see RESULTS)
-  make_edit_layers.py       build an edit for a set of layers
-  observe.py, compare.py    observation summaries; paired comparisons and report.md
-  math500_analyse.py        MATH-500: effect, the conditional-accuracy control, per-level curve
-  make_text_config.py       the text-only config for any Qwen3.5 size
-  fetch_exp8.sh             practice problems and the 0.8B text-only config
-  fetch_model.sh            a base model at a pinned revision
-configs/                    rerun_0.8b/2b (agent-free reruns), math500_0.8b, agentic_0.8b/2b (BFCL-V4, tau2)
-tests/                      CPU tests: uv run pytest
-docs/
-  RESULTS.md                every number, every sigma, every negative result
-  REVIEW.md                 independent correctness review: what was wrong, what is still limited
-  REPRODUCE.md              step by step, including the traps
-  PREREG_medqa_open.md      pre-registration, written before the open-ended run
-  PREREG_math500.md         pre-registration + the reference bars, read before the result
-  RERUN.md                  the agent-free reruns: what, why, how, what gets logged
-  AGENTIC.md                BFCL-V4 and tau2-bench: setup, protocol, what was found wiring them up
-data/splits.json            which practice problems (GSM8K / MATH train) are in fit_gen, the set an edit is built
-                            from, and in the dev_a, dev_b and final_practice evaluation slices
+  run.py          the whole method from one config, every step logged
+  setup.sh        practice problems and the base models, once
+configs/          rerun_0.8b.json, rerun_2b.json (build the edit, evaluate on MATH-500); agentic_*.json (parked)
+data/splits.json  which practice problems are fit_gen, the set an edit is built from
+tests/            CPU tests: uv run pytest
+docs/             RESULTS (every number), REVIEW, REPRODUCE (the traps), AGENTIC, pre-registrations
 ```
-
-Each run writes its own `runs/`, `cache/`, `edits/`, `ckpts/` and `results/` folders. Nothing is shipped
-pre-computed: every run generates its own base traces and base runs.
-
----
 
 ## Running it
 
-On a CUDA machine (docs/RERUN.md has the details and the compute):
+On a Linux machine with a GPU. One environment holds everything, vLLM included:
 
 ```bash
 uv sync
-bash scripts/fetch_exp8.sh                 # practice problems + the 0.8B text-only config
-uv run bash scripts/fetch_model.sh         # Qwen3.5-0.8B at the pinned revision, into models/
-uv run pytest                              # CPU tests
+bash scripts/setup.sh                                           # practice problems, Qwen3.5-0.8B and 2B
+uv run python scripts/run.py configs/rerun_0.8b.json --dry-run  # every step, nothing run
+uv run python scripts/run.py configs/rerun_0.8b.json
 ```
 
-vLLM needs its own virtualenv: the lockfile pins a vllm that cannot resolve against its torch.
+`run.py` runs, in order: a checkpoint of the base model → its answers to the 512 fit_gen problems → matched
+pairs → u → activations → the LP at every layer → an edit per arm → a checkpoint per arm → every benchmark for
+every arm and for base → the report. A step that finished is skipped next time, so a crashed run resumes. Any
+step can be run by hand: `--dry-run` prints the exact commands.
 
-```bash
-uv venv /workspace/vllmenv --python 3.12
-uv pip install --python /workspace/vllmenv/bin/python vllm transformers datasets safetensors math-verify lm-eval
-uv pip install --python /workspace/vllmenv/bin/python -e . --no-deps
-```
+Everything goes in `runs/<name>/`:
 
-Then the whole pipeline from one config — traces, pairs, direction, layer search, edits, checkpoints, every
-benchmark, observations and a paired report — with each step logged and skipped once done:
-
-```bash
-uv run python scripts/run_experiment.py configs/rerun_0.8b.json --dry-run   # the plan, exact commands
-uv run python scripts/run_experiment.py configs/rerun_0.8b.json
-```
-
-Any stage can also be run by hand: `--dry-run` prints the exact command and environment for each. The pair
-generation draws every continuation at `presence_penalty` 0 (`PAIR_N_LOOP=8 PAIR_N_PROD=0`; the script's own
-default is the older 4/4 split).
+| | |
+|---|---|
+| `report.md`, `evals.csv`, `observations.json` | the results; what the method built (pairs, direction quality per layer, the layer ranking and its neurons, the edits) |
+| `manifest.json`, `events.jsonl`, `gpu.csv`, `logs/` | every step's command, timing and exit code; machine and versions; GPU use every 30 s; each step's full output |
+| `results/<arm>/<benchmark>/` | every answer with its loop statistics, scores, `summary.json` |
+| `traces/`, `pairs/`, `activations/`, `layers/`, `edits/`, `checkpoints/` | the intermediate products, stage by stage |
 
 Building the direction takes about 22 minutes on one RTX 4090. For reference, Barry reports the frontier
 model took 15 minutes for the same step, so **this is not a speed-up** — it removes the dependency, not the
@@ -160,6 +129,5 @@ The idea is Takehi, Teoh, Zhang and Khattab's
 The linear program, the evaluation harness and every reference number here are Nathan Barry's
 ([Can a Linear Program Do Weight-Space Programming?](https://nathan.rs/posts/weight-space-lp/),
 [code](https://github.com/nathanrs/weight-space-lp)). Parts of `src/afwsp/` are adapted from his code under its
-MIT licence (THIRD_PARTY_NOTICES.md). This
-repository contributes the matched-pair
-construction for `u` and the measurements in `docs/RESULTS.md`.
+MIT licence (THIRD_PARTY_NOTICES.md). This repository contributes the matched-pair construction for `u`
+and the measurements in `docs/RESULTS.md`.
