@@ -6,10 +6,13 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-[ -d third_party/lm_understand-logs ] || \
-  git clone --depth 1 https://github.com/RikiyaT/lm_understand-logs.git third_party/lm_understand-logs
-mkdir -p data/practice
-cp third_party/lm_understand-logs/exp8_math/practice/{gsm8k_train.jsonl,math_train.jsonl} data/practice/
+if [ ! -f data/practice/math_train.jsonl ]; then
+  logs=$(mktemp -d)
+  git clone --depth 1 https://github.com/RikiyaT/lm_understand-logs.git "$logs"
+  mkdir -p data/practice
+  cp "$logs"/exp8_math/practice/{gsm8k_train.jsonl,math_train.jsonl} data/practice/
+  rm -rf "$logs"
+fi
 
 download() {   # name revision
   uv run python -c "from huggingface_hub import snapshot_download as d; d('Qwen/$1', revision='$2', local_dir='models/$1')"

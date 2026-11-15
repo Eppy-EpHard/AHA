@@ -1,6 +1,6 @@
 """Run the method end to end from one config, and log everything.
 
-  python scripts/run.py configs/rerun_0.8b.json [--dry-run] [--only STAGE,...] [--from STAGE] [--force]
+  python scripts/run.py configs/qwen3.5-0.8b.json [--dry-run] [--only STAGE,...] [--from STAGE] [--force]
 
 Stages, in order. A step that finished is skipped next time, unless --force.
   checkpoint   a vLLM checkpoint of the unedited model
