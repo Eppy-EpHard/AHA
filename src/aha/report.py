@@ -1,6 +1,6 @@
 """What a run built and how each arm did, on one page.
 
-  python -m afwsp.report runs/<name>
+  python -m aha.report runs/<name>
 
 Writes observations.json, evals.csv (one row per benchmark and arm) and report.md into the run folder. The
 observations cover the pairs, the direction's quality at every layer, the layer ranking with the neurons it chose,

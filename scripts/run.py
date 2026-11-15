@@ -59,32 +59,32 @@ def plan(stage, config, run):
     pairs = {"n_loop": 8, "n_prod": 0, "max_prefix": 300, **config.get("pairs", {})}
     gpu = ["--gpu-memory", config["gpu_memory"]] if "gpu_memory" in config else []    # vLLM's share of the card
     if stage == "checkpoint":
-        return [("checkpoint", python("afwsp.model", "checkpoint", model, run / "checkpoints/base"))]
+        return [("checkpoint", python("aha.model", "checkpoint", model, run / "checkpoints/base"))]
     if stage == "traces":
-        return [("traces", python("afwsp.evals", run / "checkpoints/base", run / "traces",
+        return [("traces", python("aha.evals", run / "checkpoints/base", run / "traces",
                                   "--sets", "gsm8k_train,math_train", "--n", 1, "--split", "fit_gen", *gpu))]
     if stage == "pairs":
-        return [("pairs", python("afwsp.direction", "pairs", model, run / "traces", run / "pairs",
+        return [("pairs", python("aha.direction", "pairs", model, run / "traces", run / "pairs",
                                  "--n-loop", pairs["n_loop"], "--n-prod", pairs["n_prod"],
                                  "--max-prefix", pairs["max_prefix"], *gpu))]
     if stage == "direction":
-        return [("direction", python("afwsp.direction", "build", model, run / "pairs"))]
+        return [("direction", python("aha.direction", "build", model, run / "pairs"))]
     if stage == "activations":
-        return [("activations", python("afwsp.edit", "collect", model, run / "traces", run / "activations",
+        return [("activations", python("aha.edit", "collect", model, run / "traces", run / "activations",
                                        "--traces", config.get("activation_traces", 300)))]
     if stage == "layers":
-        return [("layers", python("afwsp.edit", "search", model, run / "pairs", run / "activations", run / "layers",
+        return [("layers", python("aha.edit", "search", model, run / "pairs", run / "activations", run / "layers",
                                   "--eps", lp["eps"], "--k", lp["k"], "--mult", lp["mult"], "--seed", lp["seed"]))]
     if stage == "edits":
         steps = []
         for arm, spec in arms.items():
             layers = arm_layers(spec, run)
             layers = ",".join(map(str, layers)) if layers else "<top pair of the layer search>"
-            steps.append((f"edit-{arm}", python("afwsp.edit", "write", model, run / "layers", layers,
+            steps.append((f"edit-{arm}", python("aha.edit", "write", model, run / "layers", layers,
                                                  run / f"edits/{arm}.safetensors")))
         return steps
     if stage == "arms":
-        return [(f"checkpoint-{arm}", python("afwsp.model", "checkpoint", model, run / f"checkpoints/{arm}",
+        return [(f"checkpoint-{arm}", python("aha.model", "checkpoint", model, run / f"checkpoints/{arm}",
                                              "--edit", run / f"edits/{arm}.safetensors"))
                 for arm in arms]
     if stage == "evals":
@@ -94,11 +94,11 @@ def plan(stage, config, run):
                 raise SystemExit(f"unknown benchmark {benchmark}; known: {', '.join(BENCHMARKS)}")
             for arm in list(arms) + ["base"]:          # the edits first: base runs are the slow ones
                 steps.append((f"eval-{arm}-{benchmark}",
-                              python("afwsp.evals", run / f"checkpoints/{arm}", run / f"results/{arm}/{benchmark}",
+                              python("aha.evals", run / f"checkpoints/{arm}", run / f"results/{arm}/{benchmark}",
                                      *BENCHMARKS[benchmark], *gpu)))
         return steps
     if stage == "report":
-        return [("report", python("afwsp.report", run))]
+        return [("report", python("aha.report", run))]
     raise SystemExit(f"unknown stage {stage}")
 
 

@@ -173,7 +173,7 @@ its direction, so AHA is not faster. It removes the agent, not the time.
 ## Layout
 
 ```
-src/afwsp/
+src/aha/
   loops.py        the loop detector
   model.py        load the model, hook its layers, read its weights, build vLLM checkpoints
   direction.py    matched pairs → u
@@ -209,7 +209,7 @@ code, and `scripts/setup.sh` downloads the practice problems from their logs (CC
 
 **Nathan Barry.** The linear program and the evaluation harness are his:
 [Can a Linear Program Do Weight-Space Programming?](https://nathan.rs/posts/weight-space-lp/)
-([code](https://github.com/nathanrs/weight-space-lp)). Several parts of `src/afwsp/` are adapted from his code:
+([code](https://github.com/nathanrs/weight-space-lp)). Several parts of `src/aha/` are adapted from his code:
 - the loop detector;
 - the model hooks and the checkpoint builder;
 - the activation collection;

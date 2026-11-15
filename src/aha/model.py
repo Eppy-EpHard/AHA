@@ -1,7 +1,7 @@
 """The model: load it, capture what its MLPs read and write, read its weights, and build the text-only checkpoint
 that vLLM evaluates (Qwen3_5ForCausalLM, as the original paper did).
 
-  python -m afwsp.model checkpoint <model_dir> <out_dir> [--edit edit.safetensors]
+  python -m aha.model checkpoint <model_dir> <out_dir> [--edit edit.safetensors]
 
 Adapted in part from weight-space-lp (MIT).
 """

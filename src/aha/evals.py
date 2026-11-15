@@ -2,7 +2,7 @@
 presence_penalty 1.5, up to 32,768 tokens, seed 0. The answer is the last \\boxed{} after </think>, graded with
 math-verify.
 
-  python -m afwsp.evals <checkpoint> <out_dir> --sets math500 [--n 1] [--split dev_a] [--limit 500]
+  python -m aha.evals <checkpoint> <out_dir> --sets math500 [--n 1] [--split dev_a] [--limit 500]
 
 Sets: math500, gsm8k (the test split), and the practice sets gsm8k_train and math_train; data/splits.json names
 their subsets. Every answer is saved with the loop detector's verdict on its tokens. summary.json records accuracy,

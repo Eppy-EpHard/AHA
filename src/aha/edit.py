@@ -1,8 +1,8 @@
 """From activations to the edit ΔW = u vᵀ on an MLP's down_proj.
 
-  python -m afwsp.edit collect <model_dir> <traces_dir> <acts_dir> [--traces 300]
-  python -m afwsp.edit search <model_dir> <pairs_dir> <acts_dir> <layers_dir> [--eps 1] [--k 8] [--mult 4] [--seed 0]
-  python -m afwsp.edit write <model_dir> <layers_dir> 9,21 <edit.safetensors>
+  python -m aha.edit collect <model_dir> <traces_dir> <acts_dir> [--traces 300]
+  python -m aha.edit search <model_dir> <pairs_dir> <acts_dir> <layers_dir> [--eps 1] [--k 8] [--mult 4] [--seed 0]
+  python -m aha.edit write <model_dir> <layers_dir> 9,21 <edit.safetensors>
 
 collect: teacher-force base answers and save, at every layer, the MLP input h on tokens inside loops and on
 productive tokens.

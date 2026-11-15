@@ -1,7 +1,7 @@
 """The loop direction u, from matched pairs of the model's own continuations.
 
-  python -m afwsp.direction pairs <model_dir> <traces_dir> <pairs_dir> [--n-loop 8] [--n-prod 0] [--max-prefix 300]
-  python -m afwsp.direction build <model_dir> <pairs_dir>
+  python -m aha.direction pairs <model_dir> <traces_dir> <pairs_dir> [--n-loop 8] [--n-prod 0] [--max-prefix 300]
+  python -m aha.direction build <model_dir> <pairs_dir>
 
 pairs: cut each base answer that loops 8 tokens before its loop starts, and sample continuations from that exact
 prefix. Each continuation is labelled by its own loop onset. A prefix with both a looping and a non-looping
