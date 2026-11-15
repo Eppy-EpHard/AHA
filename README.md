@@ -8,8 +8,8 @@ weight matrices stops this. Until now, finding that change has needed a frontier
 to the weights. AHA builds the same kind of edit from the model's own samples and a linear program: no agent, no
 gradient step, no training run.
 
-**Blog post:** *Who Needs an LLM to Program an LLM? Introducing AHA!* by Ahmed Khamis, Rasul Tutunov and Haitham Bou
-Ammar, November 2026.
+**Blog post:** [*Who Needs an LLM to Program an LLM? Introducing AHA!*](https://haithamb.github.io/aha/) by Ahmed
+Khamis, Rasul Tutunov and Haitham Bou Ammar, November 2026.
 
 ---
 
@@ -196,6 +196,7 @@ docs/             RESULTS (every number), REVIEW, REPRODUCE (the traps), pre-reg
   author = {Khamis, Ahmed and Tutunov, Rasul and Bou Ammar, Haitham},
   year   = {2026},
   month  = nov,
+  url    = {https://haithamb.github.io/aha/},
   note   = {Blog post}
 }
 ```
