@@ -2,11 +2,9 @@ __pycache__/
 *.pyc
 .DS_Store
 .venv/
-.pytest_cache/
 
 # downloaded by scripts/setup.sh
 models/
-third_party/
 data/practice/
 
 # edit files and model weights
