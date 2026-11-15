@@ -99,6 +99,9 @@ uv run python scripts/run.py configs/rerun_0.8b.json --dry-run  # every step, no
 uv run python scripts/run.py configs/rerun_0.8b.json
 ```
 
+On a GPU that other jobs are using, set `"gpu_memory"` in the config to vLLM's share of the whole card, a little
+under free / total (0.22 for 20 GB free on an 80 GB H100); leave it out on a free GPU.
+
 `run.py` runs, in order: a checkpoint of the base model → its answers to the 512 fit_gen problems → matched
 pairs → u → activations → the LP at every layer → an edit per arm → a checkpoint per arm → every benchmark for
 every arm and for base → the report. A step that finished is skipped next time, so a crashed run resumes. Any

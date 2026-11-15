@@ -64,7 +64,8 @@ def looping_prefixes(tokenizer, traces_dir, margin=8, max_prefix=300, keep_share
     return kept, cap
 
 
-def make_pairs(model_dir, traces_dir, pairs_dir, n_loop=8, n_prod=0, max_prefix=300, max_new=3072, margin=8):
+def make_pairs(model_dir, traces_dir, pairs_dir, n_loop=8, n_prod=0, max_prefix=300, max_new=3072, margin=8,
+               gpu_memory=0.85):
     """Sample continuations of every looping prefix and write continuations.json and pairs_summary.json."""
     from vllm import LLM, SamplingParams
     from vllm.inputs import TokensPrompt
@@ -74,7 +75,7 @@ def make_pairs(model_dir, traces_dir, pairs_dir, n_loop=8, n_prod=0, max_prefix=
     prefixes, cap = looping_prefixes(tokenizer, traces_dir, margin, max_prefix)
     if not prefixes:
         raise SystemExit("no looping base answers to branch from")
-    llm = LLM(model=str(model_dir), dtype="bfloat16", gpu_memory_utilization=0.85, max_model_len=cap + max_new + 512,
+    llm = LLM(model=str(model_dir), dtype="bfloat16", gpu_memory_utilization=gpu_memory, max_model_len=cap + max_new + 512,
               seed=0)
     penalties = [0.0] * n_loop + [1.5] * n_prod
     samplers = [SamplingParams(temperature=0.6, top_p=0.95, top_k=20, presence_penalty=p, max_tokens=max_new, seed=i)
@@ -190,12 +191,15 @@ def main():
     pairs.add_argument("--n-loop", type=int, default=8, help="continuations at presence_penalty 0")
     pairs.add_argument("--n-prod", type=int, default=0, help="continuations at presence_penalty 1.5")
     pairs.add_argument("--max-prefix", type=int, default=300)
+    pairs.add_argument("--gpu-memory", type=float, default=0.85,
+                       help="share of the GPU's total memory vLLM may take; on a shared GPU, below free / total")
     build = sub.add_parser("build", help="the direction u at every layer")
     build.add_argument("model_dir")
     build.add_argument("pairs_dir")
     args = parser.parse_args()
     if args.command == "pairs":
-        make_pairs(args.model_dir, args.traces_dir, args.pairs_dir, args.n_loop, args.n_prod, args.max_prefix)
+        make_pairs(args.model_dir, args.traces_dir, args.pairs_dir, args.n_loop, args.n_prod, args.max_prefix,
+                   gpu_memory=args.gpu_memory)
     else:
         build_direction(args.model_dir, args.pairs_dir)
 

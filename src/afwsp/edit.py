@@ -207,9 +207,7 @@ def search_layers(model_dir, pairs_dir, acts_dir, layers_dir, eps=1.0, k=8, mult
     out.mkdir(parents=True, exist_ok=True)
     json.dump(rows, open(out / "layers.json", "w"), indent=1)
     np.savez(out / "solutions.npz", **solutions)
-    ranks = {r["layer"]: i + 1 for i, r in enumerate(rows)}
-    print(f"ranking: {[r['layer'] for r in rows]}; top pair {sorted(r['layer'] for r in rows[:2])}; "
-          f"Astra's 15 and 19 rank {ranks.get(15)} and {ranks.get(19)} of {len(rows)}", flush=True)
+    print(f"ranking: {[r['layer'] for r in rows]}; top pair {sorted(r['layer'] for r in rows[:2])}", flush=True)
 
 
 # ------------------------------------------------------------------------------------------------- the edit

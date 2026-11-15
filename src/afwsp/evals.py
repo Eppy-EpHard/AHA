@@ -235,8 +235,11 @@ def main():
     parser.add_argument("--split", help="keep only this split of data/splits.json (e.g. fit_gen, dev_a)")
     parser.add_argument("--limit", type=int, help="first N problems of each set")
     parser.add_argument("--max-tokens", type=int, default=32768)
+    parser.add_argument("--gpu-memory", type=float, default=0.88,
+                        help="share of the GPU's total memory vLLM may take; on a shared GPU, below free / total")
     args = parser.parse_args()
-    evaluate(args.checkpoint, args.out_dir, args.sets.split(","), args.n, args.split, args.limit, args.max_tokens)
+    evaluate(args.checkpoint, args.out_dir, args.sets.split(","), args.n, args.split, args.limit, args.max_tokens,
+             args.gpu_memory)
 
 
 if __name__ == "__main__":

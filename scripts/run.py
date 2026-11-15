@@ -57,15 +57,16 @@ def plan(stage, config, run):
     arms = config["arms"]
     lp = {"eps": 1.0, "k": 8, "mult": 4, "seed": 0, **config.get("lp", {})}
     pairs = {"n_loop": 8, "n_prod": 0, "max_prefix": 300, **config.get("pairs", {})}
+    gpu = ["--gpu-memory", config["gpu_memory"]] if "gpu_memory" in config else []    # vLLM's share of the card
     if stage == "checkpoint":
         return [("checkpoint", python("afwsp.model", "checkpoint", model, run / "checkpoints/base"))]
     if stage == "traces":
         return [("traces", python("afwsp.evals", run / "checkpoints/base", run / "traces",
-                                  "--sets", "gsm8k_train,math_train", "--n", 1, "--split", "fit_gen"))]
+                                  "--sets", "gsm8k_train,math_train", "--n", 1, "--split", "fit_gen", *gpu))]
     if stage == "pairs":
         return [("pairs", python("afwsp.direction", "pairs", model, run / "traces", run / "pairs",
                                  "--n-loop", pairs["n_loop"], "--n-prod", pairs["n_prod"],
-                                 "--max-prefix", pairs["max_prefix"]))]
+                                 "--max-prefix", pairs["max_prefix"], *gpu))]
     if stage == "direction":
         return [("direction", python("afwsp.direction", "build", model, run / "pairs"))]
     if stage == "activations":
@@ -94,7 +95,7 @@ def plan(stage, config, run):
             for arm in list(arms) + ["base"]:          # the edits first: base runs are the slow ones
                 steps.append((f"eval-{arm}-{benchmark}",
                               python("afwsp.evals", run / f"checkpoints/{arm}", run / f"results/{arm}/{benchmark}",
-                                     *BENCHMARKS[benchmark])))
+                                     *BENCHMARKS[benchmark], *gpu)))
         return steps
     if stage == "report":
         return [("report", python("afwsp.report", run))]
