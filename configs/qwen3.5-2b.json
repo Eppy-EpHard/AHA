@@ -1,5 +1,5 @@
 {
-  "name": "rerun-2b",
+  "name": "qwen3.5-2b",
   "model": "models/Qwen3.5-2B",
   "arms": {"derived": "top2"},
   "benchmarks": ["math500"],

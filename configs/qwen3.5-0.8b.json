@@ -1,9 +1,8 @@
 {
-  "name": "rerun-0.8b",
+  "name": "qwen3.5-0.8b",
   "model": "models/Qwen3.5-0.8B",
   "arms": {"derived": "top2"},
   "benchmarks": ["math500"],
   "pairs": {"n_loop": 8, "n_prod": 0, "max_prefix": 300},
-  "lp": {"eps": 1.0, "k": 8, "mult": 4, "seed": 0},
-  "gpu_memory": 0.22
+  "lp": {"eps": 1.0, "k": 8, "mult": 4, "seed": 0}
 }
