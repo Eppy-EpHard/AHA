@@ -200,7 +200,7 @@ mechanism claim with its control already run, and it is the part most worth writ
 
 ## Reproducing
 
-The pipeline and every eval now run from this repository (README, *Running it*; docs/RERUN.md). The files this
+The pipeline and every eval now run from this repository (README, *Running it*). The files this
 run produced (`directions.npz`, the `pairdir_k8` edit, `layer_ranking.json` and the result summaries) are kept in
 haithamb/matched-pairs under `artifacts/`. `pairdir_k8` itself was built with Barry's `e2_sparsity_sweep.py 1.0 8
 acts_fitgen pairs` → `e2_make_edits_sweep.py`, patched to read `cache/pairs/directions.npz`.
@@ -368,7 +368,7 @@ obstacle was costing.
 
 That is monotone across everything measured. It makes `cut_share` a **cheap go/no-go test**: it needs no
 edit, no pairs and no linear program, only one generation pass on the base model, and it is an upper bound
-on what any loop edit could recover. `python -m afwsp.eval.cut_survey` runs it.
+on what any loop edit could recover. `matchedpairs/cut_survey.py` in haithamb/matched-pairs runs it.
 
 Measured on **unedited Qwen3.5-0.8B**, 64 problems per benchmark, the same sampling protocol as every other
 number here (`temperature=0.6, top_p=0.95, top_k=20, presence_penalty=1.5, max_tokens=32768`). Nothing is
@@ -617,3 +617,116 @@ side — and 1.97 sigma is at the threshold, not past it.
 Ahead of the LLM-free alternative on all three; at parity with the LLM-derived arms on all three. **Every
 one of these numbers comes from `pairdir_k8`, the weakest of our three builds** — the within-sampler
 direction and the derived-layer arm have only ever been evaluated on the development split.
+
+## Qwen3.5-2B, held out on both benchmarks: the LLM-free arm is never behind (2026-11-14)
+
+The 2B edit was rebuilt from scratch because the original was never exported and its pod was terminated
+(see REPRODUCE.md). The rebuild produced **both** arms, which is the first chance this work has had to score
+the fully-LLM-free configuration on held-out data.
+
+Everything below is the 2B's own: its own base traces (192 `fit_gen` problems, stamped), its own matched
+continuations (**35 usable pairs of 80 prefixes** — the original run gave 35 of 76, so the pair yield
+replicates), its own per-layer directions and its own LP solve. **Only the two layer indices 15/19 were ever
+inherited from the agent**, and `derived_k8` does not use them: our own search chose **layers 2 and 4**.
+
+All six cells measured on one pod, 500 problems each, 1 sample, seed 0, the author's harness and grader.
+
+| | base | `inherited_k8` (15/19) | `derived_k8` (2/4, **no LLM anywhere**) |
+|---|---|---|---|
+| **GSM8K test** | 75.8 (cut 0.25) | 87.8 (cut 0.06) | **88.4** (cut 0.06) |
+| **MATH-500** | 69.6 (cut 0.31) | 79.2 (cut 0.19) | **79.6** (cut 0.19) |
+
+| effect | GSM8K test | MATH-500 |
+|---|---|---|
+| `inherited_k8` vs base | +12.0, **4.92 sigma** | +9.6, **3.48 sigma** |
+| `derived_k8` vs base | +12.6, **5.20 sigma** | +10.0, **3.63 sigma** |
+| `derived_k8` vs `inherited_k8` | +0.6, 0.29 sigma | +0.4, 0.16 sigma |
+
+**The layer-choice question is now settled across four independent tests, all null:**
+
+| | comparison | effect |
+|---|---|---|
+| 0.8B `dev_a` | 9/21 vs 15/19 | +1.5, 0.27 sigma |
+| 2B `dev_a` | 2/4 vs 15/19 | +0.8, 0.17 sigma |
+| 2B GSM8K test | 2/4 vs 15/19 | +0.6, 0.29 sigma |
+| 2B MATH-500 | 2/4 vs 15/19 | +0.4, 0.16 sigma |
+
+The last component taken from a language model was two integers, and deriving them costs nothing measurable.
+That is what puts "no language model anywhere in the pipeline" on held-out numbers rather than on the split
+the method was fitted to. Note the search chose layers **2 and 4** for the 2B against **9 and 21** for the
+0.8B and the agent's **15 and 19** — structurally very different placements, all within noise of each other.
+
+### Headroom recovered falls as the task gets harder
+
+| | base `cut_share` | available | recovered | share | residual cut |
+|---|---|---|---|---|---|
+| 0.8B GSM8K test | 0.86 | ~72 pts | +57.2 | **79%** | 0.14 |
+| 2B GSM8K test | 0.25 | ~25 pts | +12.6 | **50%** | 0.06 |
+| 2B MATH-500 | 0.31 | ~31 pts | +10.0 | **32%** | 0.19 |
+
+The edit removes a *smaller fraction* of truncation on harder material, not merely a smaller absolute amount,
+and leaves the largest residual (0.19) on the hardest benchmark. That is consistent with the measured
+composition of residual truncation: on the barely-drained `math_train` set only **10.8%** of cut samples are
+looping, the rest being verbose-and-lost, which a repetition direction cannot address (see PASSK_RESULT.md
+in the research notes).
+
+### Scale beats editing, and the writeup should say so
+
+On MATH-500 the **unedited 2B scores 69.6**, above every edited 0.8B — ours at 51.8 and the best published
+0.8B arm at 53.2. Going from 0.8B to 2B is worth more on this benchmark than any weight edit at 0.8B. This
+method recovers accuracy a given model is losing to a specific failure; it is not a substitute for a larger
+model, and it is not distillation.
+
+### Artefacts
+
+`artifacts/2b/` in haithamb/matched-pairs holds `directions_2b.npz` (all 24 layers) and `layer_search_2b.json`.
+The two edit safetensors are 50 MB each and are **not** committed; they rebuild from the directions file in
+about 40 minutes (activation cache + LP, no traces or pairs needed).
+
+**No external comparison exists for the 2B.** Barry's repository is Qwen3.5-0.8B only — 14 references to it,
+no 2B anywhere, and Takehi et al. used the same 0.8B plus a smaller Gemma 3 270M. These are the only numbers
+for this method at a second model size, which also means the harness is unvalidated here; the 0.8B is where
+it reproduces someone else's baseline (14.0 against his 14.1 on GSM8K test).
+
+## IFEval measured end to end here: 19.6 -> 62.7, and the drift quantified (2026-11-14)
+
+The last provenance gap. Every IFEval number in this work used **the author's** base (22.9) from his
+hardware, so the published +39.6 was a cross-machine comparison. Both arms were re-run on one pod.
+
+| arm | | strict | loose | `cut_share` |
+|---|---|---|---|---|
+| base, unedited | **ours** | **19.6** | 20.3 | 0.76 |
+| `pairdir_k8` | **ours, no LLM** | **62.7** | 65.2 | 0.07 |
+
+**+43.1 points, pooled SE 3.0, 14.40 sigma, n=541, same prompts, same pod.**
+
+**The edit replicates across machines; the base does not.** Our edited arm scores 62.7 here against 62.5
+measured on a different pod — 0.2 points apart. Our base scores 19.6 against the author's 22.9, a drift of
+**-3.3 points (1.33 sigma, within noise)**. So the effect was slightly *understated* by using his baseline:
++43.1 rather than +39.6.
+
+### Cross-machine drift, now measured on all three benchmarks
+
+| | ours | author's | drift |
+|---|---|---|---|
+| GSM8K test | 14.0 | 14.1 | −0.1 |
+| MATH-500 | 9.8 | 7.0 | **+2.8** |
+| IFEval | 19.6 | 22.9 | **−3.3** |
+
+Not systematic in either direction, which is what vLLM's documented non-determinism across hardware predicts
+rather than any harness difference. The practical rule: **run your own base arm.** Two of the three drifts
+exceed 2.5 points, enough to matter for any claim smaller than about 8 points — which is exactly the size of
+the MedQA and residual-truncation effects this work has had to argue about.
+
+### Every cell, both models, measured here
+
+| | GSM8K train | GSM8K test | MATH train | MATH-500 | IFEval |
+|---|---|---|---|---|---|
+| **0.8B** base | 10.9* | **14.0** | 10.9* | **9.8** | **19.6** |
+| **0.8B** edited | 75.0* | **71.2** | 64.1* | **51.8** | **62.7** |
+| **2B** base | 70.3 | **75.8** | 75.0 | **69.6** | **61.4** |
+| **2B** edited | 89.1 | **88.4** | 76.6 | **79.6** | **77.1** |
+
+Bold = measured by us; `*` = the author's shipped `dev_a` numbers, which nobody's method holds out anyway.
+Train columns are n=64 (the `dev_a` slice); test columns are n=500, IFEval n=541. The 2B edited row is
+`derived_k8` on the held-out columns — our direction **and** our layers, no language model anywhere.

@@ -16,21 +16,19 @@ no gradients, and matches what the frontier model found.**
 
 ## Results
 
-| | base | ours (no LLM) | effect |
+Held out: the edit is built from GSM8K-train and MATH-train traces only. One sample per problem, seed 0,
+Barry's harness and grader, base and edited model measured on the same machine.
+
+| base → edited | GSM8K test (500) | MATH-500 | IFEval (541) |
 |---|---|---|---|
-| **Qwen3.5-0.8B**, MATH-500 (500, held out) | 9.8 | **51.8** | +42.0 pts, **14.4 σ** |
-| **Qwen3.5-0.8B**, dev_a (128 problems) | 10.9 | **69.5** | — |
-| **Qwen3.5-2B**, dev_a (128 problems) | 72.7 | **86.7** | +14.1 pts, **2.80 σ** |
-| **Qwen3.5-0.8B**, IFEval (541 prompts) | 22.9 | **62.5** | +39.6 pts, **13.2 σ** |
-| **Qwen3.5-2B**, IFEval (541 prompts) | *see RESULTS.md* | **77.1** | control pending at time of writing |
+| **Qwen3.5-0.8B** | 14.0 → **71.2** (+57.2, 18.3 σ) | 9.8 → **51.8** (+42.0, 14.4 σ) | 19.6 → **62.7** (+43.1, 14.4 σ) |
+| **Qwen3.5-2B** | 75.8 → **88.4** (+12.6, 5.2 σ) | 69.6 → **79.6** (+10.0, 3.6 σ) | 61.4 → **77.1** (+15.7, 5.6 σ) |
 
-Against the LLM-derived directions on 0.8B: ours 69.5, the agent's direction 62.5, the published
-`astra_p50c` edit 59.4 on the same split. Those margins are **under 1.2 σ** and the honest word for them is
-*parity*, not a win — see [docs/RESULTS.md](docs/RESULTS.md), which carries every number with its sigma and
-every negative result.
-
-The unambiguous numbers are the ones against the **unedited** model: +14.1 points at 2.80 σ on 2B, and
-+39.6 points at 13.2 σ on IFEval for 0.8B.
+The direction comes from no LLM in every cell. The 2B's GSM8K and MATH-500 edits also use the layers our own
+search chose (2 and 4); the other cells edit layers 15 and 19, the two integers inherited from the agent. Four
+tests found the layer choice worth nothing detectable (at most +1.5 points, 0.29 σ). On 0.8B we are ahead of
+Barry's LLM-free direction on all three benchmarks and level with the LLM-derived arms — *parity*, not a win.
+[docs/RESULTS.md](docs/RESULTS.md) carries every number with its sigma and every negative result.
 
 ---
 
@@ -81,14 +79,13 @@ src/afwsp/
   edit.py         activations → the LP for v → layer ranking → W + u·vᵀ
   evals.py        MATH-500 and GSM8K, with loop statistics for every answer
   report.py       what a run built and how each arm did → report.md
-  agentic.py      BFCL-V4 and tau2-bench (docs/AGENTIC.md); bfcl_entry.py runs inside BFCL's own venv
 scripts/
   run.py          the whole method from one config, every step logged
   setup.sh        practice problems and the base models, once
-configs/          rerun_0.8b.json, rerun_2b.json (build the edit, evaluate on MATH-500); agentic_*.json (parked)
+configs/          rerun_0.8b.json, rerun_2b.json (build the edit, evaluate on MATH-500)
 data/splits.json  which practice problems are fit_gen, the set an edit is built from
 tests/            CPU tests: uv run pytest
-docs/             RESULTS (every number), REVIEW, REPRODUCE (the traps), AGENTIC, pre-registrations
+docs/             RESULTS (every number), REVIEW, REPRODUCE (the traps), pre-registrations
 ```
 
 ## Running it

@@ -1,8 +1,0 @@
-{
-  "name": "agentic-0.8b",
-  "model": "models/Qwen3.5-0.8B",
-  "arms": {"edit": {"edit": "edits/haitham/qwen3.5-0.8b.safetensors"}},
-  "benchmarks": ["bfcl_v4", "tau2"],
-  "bfcl_python": "/workspace/bfclenv/bin/python",
-  "tau2": "/workspace/tau2-bench/.venv/bin/tau2"
-}

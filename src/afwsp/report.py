@@ -15,8 +15,6 @@ from pathlib import Path
 
 import numpy as np
 
-AGENTIC = ("bfcl_v4", "tau2")
-
 
 def quantiles(values):
     values = np.asarray([v for v in values if v is not None], float)
@@ -75,13 +73,9 @@ def observe(run):
 
 # ------------------------------------------------------------------------------------------------- how it did
 
-def load_results(benchmark, folder):
+def load_results(folder):
     """Per question {key: score in [0, 1]}, and the run's cut-off, loop and token statistics."""
     scores = json.load(open(folder / "scores.json"))
-    if benchmark in AGENTIC:
-        per_question = {r["id"]: float(r["correct"][0])
-                        for r in json.load(open(folder / f"{benchmark}_per_problem.json"))}
-        return per_question, {k: scores[benchmark].get(k) for k in ("cut_share", "loop_share", "mean_tokens")}
     per_question = {r["id"]: float(np.mean(r["correct"]))
                     for f in sorted(folder.glob("*_per_problem.json")) for r in json.load(open(f))}
     sets = [v for k, v in scores.items() if k != "protocol"]
@@ -115,7 +109,7 @@ def compare(run, config):
         for arm in ["base"] + arms:
             folder = run / "results" / arm / benchmark
             if (folder / "scores.json").exists():
-                runs[arm] = load_results(benchmark, folder)
+                runs[arm] = load_results(folder)
         if "base" not in runs:
             continue
         results[benchmark] = {

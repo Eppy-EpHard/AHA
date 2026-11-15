@@ -10,7 +10,6 @@ search over all of them.
   edit        activations → the LP for v → layer ranking → W + u vᵀ
   evals       MATH-500 and GSM8K, with loop statistics for every answer
   report      what a run built and how each arm did
-  agentic     BFCL-V4 and tau2-bench (bfcl_entry runs inside BFCL's own environment)
 
 Parts are adapted from Nathan Barry's weight-space-lp (MIT); see THIRD_PARTY_NOTICES.md.
 """

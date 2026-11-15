@@ -21,7 +21,3 @@ runs/*/pairs/continuations.json
 runs/*/pairs/pair_diffs.npz
 runs/*/layers/solutions.npz
 runs/**/*_samples.jsonl.gz
-runs/**/calls*.jsonl
-runs/**/server.log
-runs/**/bfcl/result/
-runs/**/tau2/

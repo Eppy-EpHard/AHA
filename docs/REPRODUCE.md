@@ -47,8 +47,10 @@ nvidia-smi --query-compute-apps=pid,used_memory --format=csv
 
 **Base traces belong to one model.** Upstream shipped the 0.8B's traces in git, and a bare "does this file exist"
 check silently reused them for a different model. The prefixes and loop onsets then belong to the wrong model
-entirely, and the run produces plausible numbers that mean nothing. Here every run generates its own traces
-inside its own folder, `runs/<name>/`, so two models never share them or any other intermediate.
+entirely, and the run produces plausible numbers that mean nothing. Upstream shipped the 0.8B's base *scores*
+too (`dev_a_base`), with no check at all, and a 2B run compared its edits against that 0.8B baseline; it was
+caught only because the logs were read by hand. Here every run generates its own traces and scores its own base
+model inside its own folder, `runs/<name>/`, so two models never share them or any other intermediate.
 
 **`presence_penalty` suppresses the behaviour you are collecting.** See the README. 1% yield versus 32%.
 

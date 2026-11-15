@@ -9,8 +9,7 @@ Stages, in order. A step that finished is skipped next time, unless --force.
   direction    u at every layer
   activations  the MLP inputs h at every layer
   layers       the LP at every layer, ranked
-  edits        one edit per arm: "top2" takes the ranking's top pair, a list fixes the layers,
-               {"edit": "file.safetensors"} uses an existing edit (the build stages are then skipped)
+  edits        one edit per arm: "top2" takes the ranking's top pair, a list fixes the layers
   arms         a checkpoint per arm
   evals        every benchmark, for every arm and for base
   report       observations, paired comparisons, report.md
@@ -32,9 +31,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 STAGES = ["checkpoint", "traces", "pairs", "direction", "activations", "layers", "edits", "arms", "evals", "report"]
-BUILD_STAGES = {"traces", "pairs", "direction", "activations", "layers"}
-MATHS = {"math500": ["--sets", "math500", "--n", "1"],
-         "gsm8k_test": ["--sets", "gsm8k", "--n", "1", "--limit", "500"]}
+BENCHMARKS = {"math500": ["--sets", "math500", "--n", "1"],
+              "gsm8k_test": ["--sets", "gsm8k", "--n", "1", "--limit", "500"]}
 
 
 def now():
@@ -45,16 +43,10 @@ def python(module, *args):
     return [sys.executable, "-m", module, *map(str, args)]
 
 
-def is_file_arm(spec):
-    return isinstance(spec, dict) and "edit" in spec
-
-
 def arm_layers(spec, run):
     """The layers an arm edits, or None while the layer search has not run."""
     if isinstance(spec, list):
         return sorted(spec)
-    if is_file_arm(spec):
-        return None
     ranking = run / "layers/layers.json"
     return sorted(r["layer"] for r in json.load(open(ranking))[:2]) if ranking.exists() else None
 
@@ -65,8 +57,6 @@ def plan(stage, config, run):
     arms = config["arms"]
     lp = {"eps": 1.0, "k": 8, "mult": 4, "seed": 0, **config.get("lp", {})}
     pairs = {"n_loop": 8, "n_prod": 0, "max_prefix": 300, **config.get("pairs", {})}
-    if stage in BUILD_STAGES and all(is_file_arm(s) for s in arms.values()):
-        return []                                       # every arm is a given edit: nothing to build
     if stage == "checkpoint":
         return [("checkpoint", python("afwsp.model", "checkpoint", model, run / "checkpoints/base"))]
     if stage == "traces":
@@ -87,8 +77,6 @@ def plan(stage, config, run):
     if stage == "edits":
         steps = []
         for arm, spec in arms.items():
-            if is_file_arm(spec):
-                continue
             layers = arm_layers(spec, run)
             layers = ",".join(map(str, layers)) if layers else "<top pair of the layer search>"
             steps.append((f"edit-{arm}", python("afwsp.edit", "write", model, run / "layers", layers,
@@ -96,25 +84,17 @@ def plan(stage, config, run):
         return steps
     if stage == "arms":
         return [(f"checkpoint-{arm}", python("afwsp.model", "checkpoint", model, run / f"checkpoints/{arm}",
-                                             "--edit", ROOT / spec["edit"] if is_file_arm(spec)
-                                             else run / f"edits/{arm}.safetensors"))
-                for arm, spec in arms.items()]
+                                             "--edit", run / f"edits/{arm}.safetensors"))
+                for arm in arms]
     if stage == "evals":
         steps = []
         for benchmark in config["benchmarks"]:
+            if benchmark not in BENCHMARKS:
+                raise SystemExit(f"unknown benchmark {benchmark}; known: {', '.join(BENCHMARKS)}")
             for arm in list(arms) + ["base"]:          # the edits first: base runs are the slow ones
-                checkpoint, out = run / f"checkpoints/{arm}", run / f"results/{arm}/{benchmark}"
-                if benchmark in MATHS:
-                    command = python("afwsp.evals", checkpoint, out, *MATHS[benchmark])
-                elif benchmark == "bfcl_v4":
-                    command = python("afwsp.agentic", "bfcl", checkpoint, out, "--bfcl-python",
-                                     config["bfcl_python"], *config.get("bfcl_args", []))
-                elif benchmark == "tau2":
-                    command = python("afwsp.agentic", "tau2", checkpoint, out, "--tau2", config["tau2"],
-                                     *config.get("tau2_args", []))
-                else:
-                    raise SystemExit(f"unknown benchmark {benchmark}")
-                steps.append((f"eval-{arm}-{benchmark}", command))
+                steps.append((f"eval-{arm}-{benchmark}",
+                              python("afwsp.evals", run / f"checkpoints/{arm}", run / f"results/{arm}/{benchmark}",
+                                     *BENCHMARKS[benchmark])))
         return steps
     if stage == "report":
         return [("report", python("afwsp.report", run))]
@@ -188,9 +168,6 @@ def main():
 
     config = json.load(open(args.config))
     run = ROOT / "runs" / config["name"]
-    for arm, spec in config["arms"].items():
-        if is_file_arm(spec) and not (ROOT / spec["edit"]).exists():
-            print(f"[warn] arm {arm}: edit file {spec['edit']} is missing", flush=True)
     if args.dry_run:
         for stage in stages:
             for name, command in plan(stage, config, run):
