@@ -25,8 +25,6 @@ def quantiles(values):
             "p90": float(p90)}
 
 
-# ------------------------------------------------------------------------------------------------- what was built
-
 def direction_quality(pairs_dir):
     """Per layer: held-out separation, how much of the pairs' difference survives averaging (coherence: 1 when every
     pair points the same way), how well held-out pairs agree with u, and how u turns from one layer to the next."""
@@ -70,8 +68,6 @@ def observe(run):
         obs["edits"] = edits
     return obs
 
-
-# ------------------------------------------------------------------------------------------------- how it did
 
 def load_results(folder):
     """Per question {key: score in [0, 1]}, and the run's cut-off, loop and token statistics."""
@@ -120,8 +116,6 @@ def compare(run, config):
                            for a, b in itertools.combinations([x for x in arms if x in runs], 2)}}
     return results
 
-
-# ------------------------------------------------------------------------------------------------- the page
 
 def markdown(manifest, obs, results):
     config = manifest["config"]
