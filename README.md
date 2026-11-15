@@ -32,7 +32,7 @@ Where each number comes from:
 - **Direction:** every cell uses the matched-pair direction. The 0.8B cells use the first version of it, built from
   continuations sampled at mixed presence penalties.
 - **Layers:** the 2B's GSM8K and MATH-500 edits also use the layers our search chose (2 and 4), so no language model
-  is involved in them at all. The other four cells edit layers 15 and 19, inherited from the agent.
+  is involved in them at all.
 
 On the 0.8B:
 - AHA's direction is level with the agent's own edit: the largest gap is 3.0 points, about 1 s.e.
