@@ -2,7 +2,7 @@
 presence_penalty 1.5, up to 32,768 tokens, seed 0. The answer is the last \\boxed{} after </think>, graded with
 math-verify.
 
-  python -m aha.evals <checkpoint> <out_dir> --sets math500 [--n 1] [--split dev_a] [--limit 500]
+  python -m aha.evals <checkpoint> <out_dir> --sets math500 [--n 1] [--split dev_a] [--limit 500] [--seed 0]
 
 Sets: math500, gsm8k (the test split), and the practice sets gsm8k_train and math_train; data/splits.json names
 their subsets. Every answer is saved with the loop detector's verdict on its tokens. summary.json records accuracy,
@@ -174,7 +174,7 @@ def version(package):
 
 # ------------------------------------------------------------------------------------------------- the run
 
-def evaluate(checkpoint, out_dir, sets, n=None, split=None, limit=None, max_tokens=32768, gpu_memory=0.88):
+def evaluate(checkpoint, out_dir, sets, n=None, split=None, limit=None, max_tokens=32768, gpu_memory=0.88, seed=0):
     """Generate with vLLM, grade, and write per set <set>_samples.jsonl.gz (every answer) and
     <set>_per_problem.json, plus scores.json and summary.json."""
     from transformers import AutoTokenizer
@@ -182,10 +182,10 @@ def evaluate(checkpoint, out_dir, sets, n=None, split=None, limit=None, max_toke
 
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    sampling = dict(SAMPLING, max_tokens=max_tokens)
+    sampling = dict(SAMPLING, max_tokens=max_tokens, seed=seed)
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
     llm = LLM(model=str(checkpoint), dtype="bfloat16", gpu_memory_utilization=gpu_memory,
-              max_model_len=max_tokens + 2048, seed=0)
+              max_model_len=max_tokens + 2048, seed=seed)
     keep = split_ids(split) if split else None
     scores, summary, start, generated = {"protocol": {"sampling": sampling, "checkpoint": str(checkpoint)}}, {}, time.time(), 0
     for name in sets:
@@ -237,9 +237,11 @@ def main():
     parser.add_argument("--max-tokens", type=int, default=32768)
     parser.add_argument("--gpu-memory", type=float, default=0.88,
                         help="share of the GPU's total memory vLLM may take; on a shared GPU, below free / total")
+    parser.add_argument("--seed", type=int, default=0,
+                        help="sampling seed (the protocol's is 0); other seeds give independent replications")
     args = parser.parse_args()
     evaluate(args.checkpoint, args.out_dir, args.sets.split(","), args.n, args.split, args.limit, args.max_tokens,
-             args.gpu_memory)
+             args.gpu_memory, args.seed)
 
 
 if __name__ == "__main__":
