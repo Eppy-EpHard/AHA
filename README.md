@@ -11,6 +11,16 @@ gradient step, no training run.
 **Blog post:** [*Who Needs an LLM to Program an LLM? Introducing AHA!*](https://haithamb.github.io/aha/) by Ahmed
 Khamis, Rasul Tutunov and Haitham Bou Ammar, November 2026.
 
+![One GSM8K question answered twice. The unedited model repeats a 505-character block 159 times and stops at the
+32,768-token limit without ever answering; the same checkpoint with 16,241 weights changed reaches 10 in 6,813
+tokens.](assets/aha_before_after.gif)
+
+<sub>GSM8K test item 235 ([MP4](assets/aha_before_after.mp4)). Both transcripts are the real saved generations,
+abridged only where the clip says so. Of the 290 test questions where the unedited model runs out of tokens and the
+edited one answers correctly, this is the median by edited length — chosen by that rule rather than for effect. Across
+all 500, the unedited model hits the limit on 86.4%, and 99.5% of its wrong answers are that truncation rather than bad
+arithmetic.</sub>
+
 ---
 
 ## Results
@@ -186,6 +196,7 @@ scripts/
 configs/          qwen3.5-0.8b.json, qwen3.5-2b.json
 data/splits.json  which practice problems the edit is built from
 docs/             RESULTS (every number), REVIEW, REPRODUCE (the traps), pre-registrations
+assets/           the before/after clip, as MP4 and GIF
 ```
 
 ## Citation
